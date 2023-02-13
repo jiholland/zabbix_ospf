@@ -1,6 +1,6 @@
 zabbix_export:
   version: '6.0'
-  date: '2022-12-16T11:34:02Z'
+  date: '2023-02-13T06:48:12Z'
   groups:
     -
       uuid: 7df96b18c230490a9a0a9e2307226338
@@ -28,9 +28,10 @@ zabbix_export:
           key: ospfAdminStat
           delay: 4m
           history: 30d
-          trends: '0'
-          value_type: LOG
+          value_type: FLOAT
           description: 'The administrative status of OSPF in the router.'
+          valuemap:
+            name: ospfAdminStat
           preprocessing:
             -
               type: DISCARD_UNCHANGED_HEARTBEAT
