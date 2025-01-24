@@ -1,204 +1,119 @@
 zabbix_export:
-  version: '6.0'
-  date: '2024-01-11T06:51:30Z'
-  groups:
-    - uuid: 7df96b18c230490a9a0a9e2307226338
-      name: Templates
+  version: '7.0'
+  template_groups:
+    - uuid: 57b7ae836ca64446ba2c296389c009b7
+      name: Templates/Modules
   templates:
-    - uuid: 5d5c662929534d909f38c0f4328c8d39
-      template: OSPF-SNMP
-      name: OSPF-SNMP
+    - uuid: c04be2cb532342859d8bc538c8f72cd4
+      template: 'OSPF by SNMP'
+      name: 'OSPF by SNMP'
       description: |
         Template for monitoring the OSPF process by SNMP.
         
-        Tested on Cisco Nexus 9000 Series.
-        
-        Jørn Ivar Holland
+        Jorn Ivar Holland
       groups:
-        - name: Templates
+        - name: Templates/Modules
       items:
-        - uuid: 788fd15111044a6cbb172bd4dc2de8d9
-          name: 'OSPF router id'
+        - uuid: 2683f9a2bc8c4e78a90f49acc61fff0f
+          name: 'SNMP walk OSPF'
           type: SNMP_AGENT
-          snmp_oid: 1.3.6.1.2.1.14.1.1.0
-          key: ospfRouterId
-          delay: 1h
-          history: 30d
-          trends: '0'
+          snmp_oid: 'walk[1.3.6.1.2.1.14.10.1.1,1.3.6.1.2.1.14.10.1.3,1.3.6.1.2.1.14.10.1.6,1.3.6.1.2.1.14.10.1.7]'
+          key: ospf.walk
+          history: '0'
           value_type: TEXT
-          description: 'A 32-bit integer uniquely identifying the router in the Autonomous System.'
-          preprocessing:
-            - type: DISCARD_UNCHANGED_HEARTBEAT
-              parameters:
-                - 4h
+          trends: '0'
+          description: |
+            Discover OSPF neighbors:
+            1.3.6.1.2.1.14.10.1.1 = neighbor ip
+            1.3.6.1.2.1.14.10.1.3 = neighbor router id
+            1.3.6.1.2.1.14.10.1.6 = neighbor relationship state
+            1.3.6.1.2.1.14.10.1.7 = neighbor relationship changes
           tags:
-            - tag: component
-              value: ospf
-        - uuid: 05874e79afa24ca497ac29b92c324add
-          name: 'OSPF version'
-          type: SNMP_AGENT
-          snmp_oid: 1.3.6.1.2.1.14.1.3.0
-          key: ospfVersionNumber
-          delay: 1h
-          history: 30d
-          description: 'The current version number of the OSPF protocol.'
-          preprocessing:
-            - type: DISCARD_UNCHANGED_HEARTBEAT
-              parameters:
-                - 4h
-          tags:
-            - tag: component
-              value: ospf
-          triggers:
-            - uuid: de0038c712f8447ca11192b5b6a8d30e
-              expression: '(last(/OSPF-SNMP/ospfVersionNumber,#1)<>last(/OSPF-SNMP/ospfVersionNumber,#2))=1'
-              name: 'OSPF version has changed'
-              opdata: 'Current version: {ITEM.LASTVALUE}'
-              priority: AVERAGE
-              description: 'The OSPF version has changed.'
-              manual_close: 'YES'
-              tags:
-                - tag: scope
-                  value: availability
+            - tag: protocol
+              value: raw
       discovery_rules:
-        - uuid: f7475e07d21c408a97ab468945df3680
-          name: 'OSPF area discovery'
-          type: SNMP_AGENT
-          snmp_oid: 'discovery[{#OSPF_AREA_ID},1.3.6.1.2.1.14.2.1.1]'
-          key: ospf.area.discovery
-          delay: 1h
-          description: 'Discover a 32-bit integer uniquely identifying an area.'
+        - uuid: 2612ed69140d4ecb89671b451947e7db
+          name: 'OSPF discovery'
+          type: DEPENDENT
+          key: ospf.discovery
+          delay: '0'
+          description: 'Discover OSPF neighbors.'
           item_prototypes:
-            - uuid: 465f25cd80f44f3a92625650dd3b706a
-              name: 'OSPF area {#OSPF_AREA_ID} status'
-              type: SNMP_AGENT
-              snmp_oid: '1.3.6.1.2.1.14.2.1.10.{#SNMPINDEX}'
-              key: 'ospfAreaStatus[{#SNMPINDEX}]'
-              delay: 4m
-              history: 30d
-              description: 'This variable displays the status of the entry.'
-              valuemap:
-                name: ospfAreaStatus
-              tags:
-                - tag: component
-                  value: ospf
-              trigger_prototypes:
-                - uuid: f5a226422c6c4e6090d7dc6506505a2b
-                  expression: 'last(/OSPF-SNMP/ospfAreaStatus[{#SNMPINDEX}])<>1'
-                  name: 'OSPF area {#OSPF_AREA_ID} is down'
-                  priority: HIGH
-                  description: 'OSPF area {#OSPF_AREA_ID} is down.'
-                  tags:
-                    - tag: scope
-                      value: availability
-          preprocessing:
-            - type: DISCARD_UNCHANGED_HEARTBEAT
-              parameters:
-                - 4h
-        - uuid: dbede15c87104201879067cd19d487cb
-          name: 'OSPF interface discovery'
-          type: SNMP_AGENT
-          snmp_oid: 'discovery[{#OSPF_INTERFACE},1.3.6.1.2.1.14.7.1.1]'
-          key: ospf.if.discovery
-          delay: 1h
-          description: 'Discover the IP address of this OSPF interface.'
-          item_prototypes:
-            - uuid: 774a098be3514b1da914d3e86643dbde
-              name: 'OSPF interface {#OSPF_INTERFACE} admin status'
-              type: SNMP_AGENT
-              snmp_oid: '1.3.6.1.2.1.14.7.1.5.{#SNMPINDEX}'
-              key: 'ospfIfAdminStat[{#SNMPINDEX}]'
-              delay: 4m
-              history: 30d
-              description: 'The OSPF interface''s administrative status.'
-              valuemap:
-                name: ospfIfAdminStat
-              tags:
-                - tag: component
-                  value: ospf
-              trigger_prototypes:
-                - uuid: dbe2b0c5fae14e02a4ff7c70e8b7edca
-                  expression: 'last(/OSPF-SNMP/ospfIfAdminStat[{#SNMPINDEX}])<>1'
-                  name: 'OSPF interface {#OSFP_INTERFACE} is administratively down'
-                  priority: WARNING
-                  description: 'OSPF interface {#OSPF_INTERFACE} has administrative status disabled.'
-                  tags:
-                    - tag: scope
-                      value: availability
-          preprocessing:
-            - type: DISCARD_UNCHANGED_HEARTBEAT
-              parameters:
-                - 4h
-        - uuid: ee58d6bbf6e3471aaa2462dc2e966e9f
-          name: 'OSPF neighbor discovery'
-          type: SNMP_AGENT
-          snmp_oid: 'discovery[{#OSPF_NEIGHBOR},1.3.6.1.2.1.14.10.1.1]'
-          key: ospf.neighbor.discovery
-          delay: 1h
-          description: 'Discover the IP address of this neighbor.'
-          item_prototypes:
-            - uuid: cff265188c204f4aa3fd9681c05c3784
+            - uuid: 02f7231af39442aeb7476f1923e59225
               name: 'OSPF neighbor {#OSPF_NEIGHBOR} number of relationship changes'
-              type: SNMP_AGENT
-              snmp_oid: '1.3.6.1.2.1.14.10.1.7.{#SNMPINDEX}'
-              key: 'ospfNbrEvents[{#SNMPINDEX}]'
-              delay: 4m
-              history: 30d
+              type: DEPENDENT
+              key: 'ospf.neighbor.changes[ospfNbrEvents.{#SNMPINDEX}]'
+              delay: '0'
               description: 'The number of times this neighbor relationship has changed state, or an error has occurred.'
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '1.3.6.1.2.1.14.10.1.7.{#SNMPINDEX}'
+                    - '0'
+              master_item:
+                key: ospf.walk
               tags:
-                - tag: component
+                - tag: protocol
                   value: ospf
               trigger_prototypes:
-                - uuid: 3d5f1db6da944377b426c0df5cab408d
-                  expression: '(last(/OSPF-SNMP/ospfNbrEvents[{#SNMPINDEX}],#1)<>last(/OSPF-SNMP/ospfNbrEvents[{#SNMPINDEX}],#2))=1'
+                - uuid: 9f68d84a850345179f5cdde4caf03a7e
+                  expression: '(last(/OSPF by SNMP/ospf.neighbor.changes[ospfNbrEvents.{#SNMPINDEX}],#1)<>last(/OSPF by SNMP/ospf.neighbor.changes[ospfNbrEvents.{#SNMPINDEX}],#2))=1'
                   name: 'OSPF neighbor {#OSPF_NEIGHBOR} has changed relationship'
-                  opdata: 'Number of relationship changes: {ITEM.LASTVALUE}'
                   priority: WARNING
                   description: 'The relationship with OSPF neighbor {#OSPF_NEIGHBOR} has changed.'
                   tags:
                     - tag: scope
                       value: availability
-            - uuid: 3e6a0b29f5e1444eb9e2e63c5c660f96
+            - uuid: ecdd55b9e3dc499bbeb30cd1e2905dd6
               name: 'OSPF neighbor {#OSPF_NEIGHBOR} router id'
-              type: SNMP_AGENT
-              snmp_oid: '1.3.6.1.2.1.14.10.1.3.{#SNMPINDEX}'
-              key: 'ospfNbrRtrId[{#SNMPINDEX}]'
-              delay: 30m
-              history: 30d
-              trends: '0'
+              type: DEPENDENT
+              key: 'ospf.neighbor.id[ospfNbrRtrId.{#SNMPINDEX}]'
+              delay: '0'
               value_type: TEXT
+              trends: '0'
               description: 'A 32-bit integer uniquely identifying the neighboring router in the Autonomous System.'
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '1.3.6.1.2.1.14.10.1.3.{#SNMPINDEX}'
+                    - '0'
+              master_item:
+                key: ospf.walk
               tags:
-                - tag: component
+                - tag: protocol
                   value: ospf
               trigger_prototypes:
-                - uuid: 8cd6035240e4418b956ec9237f861662
-                  expression: '(last(/OSPF-SNMP/ospfNbrRtrId[{#SNMPINDEX}],#1)<>last(/OSPF-SNMP/ospfNbrRtrId[{#SNMPINDEX}],#2))=1'
+                - uuid: aa99fa32718c408b9ab4c2c4f6fc9165
+                  expression: '(last(/OSPF by SNMP/ospf.neighbor.id[ospfNbrRtrId.{#SNMPINDEX}],#1)<>last(/OSPF by SNMP/ospf.neighbor.id[ospfNbrRtrId.{#SNMPINDEX}],#2))=1'
                   name: 'OSPF neighbor {#OSPF_NEIGHBOR} changed router id'
-                  opdata: 'New router id: {ITEM.LASTVALUE}'
                   priority: INFO
                   description: 'OSPF neighbor {#OSPF_NEIGHBOR} changed router id.'
                   tags:
                     - tag: scope
                       value: notice
-            - uuid: ee566f588ab44f40b569f18f4c49e0ba
+            - uuid: de1e97b525a649b195ce72c1e134312e
               name: 'OSPF neighbor {#OSPF_NEIGHBOR} relationship state'
-              type: SNMP_AGENT
-              snmp_oid: '1.3.6.1.2.1.14.10.1.6.{#SNMPINDEX}'
-              key: 'ospfNbrState[{#SNMPINDEX}]'
-              delay: 4m
-              history: 30d
+              type: DEPENDENT
+              key: 'ospf.neighbor.state[ospfNbrState.{#SNMPINDEX}]'
+              delay: '0'
+              trends: '0'
               description: 'The State of the relationship with this Neighbor.'
               valuemap:
                 name: ospfNbrState
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '1.3.6.1.2.1.14.10.1.6.{#SNMPINDEX}'
+                    - '0'
+              master_item:
+                key: ospf.walk
               tags:
-                - tag: component
+                - tag: protocol
                   value: ospf
               trigger_prototypes:
-                - uuid: fef38dd8bd6a42b99171fc7681c95e45
-                  expression: 'last(/OSPF-SNMP/ospfNbrState[{#SNMPINDEX}])=2'
+                - uuid: 97172f8d3c264d25bf5ce80c598a335c
+                  expression: 'last(/OSPF by SNMP/ospf.neighbor.state[ospfNbrState.{#SNMPINDEX}])=2'
                   name: 'OSPF neighbor {#OSPF_NEIGHBOR} is in state attempt'
-                  opdata: 'Current state: {ITEM.LASTVALUE}'
                   priority: HIGH
                   description: |
                     OSPF neighbor with router ID {#OSPF_NEIGHBOR} is in operational state attempt.
@@ -207,10 +122,9 @@ zabbix_export:
                   tags:
                     - tag: scope
                       value: availability
-                - uuid: 71736f4af6d547aa9b2d43acf386a49c
-                  expression: 'last(/OSPF-SNMP/ospfNbrState[{#SNMPINDEX}])=1'
+                - uuid: c4754257acda4ede80db0b7cdb806fc3
+                  expression: 'last(/OSPF by SNMP/ospf.neighbor.state[ospfNbrState.{#SNMPINDEX}])=1'
                   name: 'OSPF neighbor {#OSPF_NEIGHBOR} is in state down'
-                  opdata: 'Current state: {ITEM.LASTVALUE}'
                   priority: HIGH
                   description: |
                     OSPF neighbor with router ID {#OSPF_NEIGHBOR} is in operational state down.
@@ -219,10 +133,9 @@ zabbix_export:
                   tags:
                     - tag: scope
                       value: availability
-                - uuid: 805ac664cf6b488fb4d8a68a3a89061c
-                  expression: 'last(/OSPF-SNMP/ospfNbrState[{#SNMPINDEX}])=6'
+                - uuid: 3485b9d6929a437f9fbc8250d5e7664a
+                  expression: 'last(/OSPF by SNMP/ospf.neighbor.state[ospfNbrState.{#SNMPINDEX}])=6'
                   name: 'OSPF neighbor {#OSPF_NEIGHBOR} is in state exchange'
-                  opdata: 'Current state: {ITEM.LASTVALUE}'
                   priority: AVERAGE
                   description: |
                     OSPF neighbor with router ID {#OSPF_NEIGHBOR} is in operational state exchange.
@@ -231,11 +144,10 @@ zabbix_export:
                   tags:
                     - tag: scope
                       value: availability
-                - uuid: b97af8a8a3e64d15841f30abf5074205
-                  expression: 'last(/OSPF-SNMP/ospfNbrState[{#SNMPINDEX}])=5'
+                - uuid: e49eddc8a2b44cfaa2bfac8c84692395
+                  expression: 'last(/OSPF by SNMP/ospf.neighbor.state[ospfNbrState.{#SNMPINDEX}])=5'
                   name: 'OSPF neighbor {#OSPF_NEIGHBOR} is in state exchange start'
-                  opdata: 'Current state: {ITEM.LASTVALUE}'
-                  priority: AVERAGE
+                  priority: HIGH
                   description: |
                     OSPF neighbor with router ID {#OSPF_NEIGHBOR} is in operational state exchange start.
                     
@@ -243,10 +155,9 @@ zabbix_export:
                   tags:
                     - tag: scope
                       value: availability
-                - uuid: 50221d407d6843f1ae81c400f330c4c4
-                  expression: 'last(/OSPF-SNMP/ospfNbrState[{#SNMPINDEX}])=3'
+                - uuid: 5139797fb849491fb06d0f1a7cfb8aab
+                  expression: 'last(/OSPF by SNMP/ospf.neighbor.state[ospfNbrState.{#SNMPINDEX}])=3'
                   name: 'OSPF neighbor {#OSPF_NEIGHBOR} is in state init'
-                  opdata: 'Current state: {ITEM.LASTVALUE}'
                   priority: HIGH
                   description: |
                     OSPF neighbor with router ID {#OSPF_NEIGHBOR} is in operational state init.
@@ -255,11 +166,10 @@ zabbix_export:
                   tags:
                     - tag: scope
                       value: availability
-                - uuid: f7cc739a0aa9411789c921dcbeb7d619
-                  expression: 'last(/OSPF-SNMP/ospfNbrState[{#SNMPINDEX}])=7'
+                - uuid: a81183ef1f9a4e71b184478aa28d6b4f
+                  expression: 'last(/OSPF by SNMP/ospf.neighbor.state[ospfNbrState.{#SNMPINDEX}])=7'
                   name: 'OSPF neighbor {#OSPF_NEIGHBOR} is in state loading'
-                  opdata: 'Current state: {ITEM.LASTVALUE}'
-                  priority: AVERAGE
+                  priority: HIGH
                   description: |
                     OSPF neighbor with router ID {#OSPF_NEIGHBOR} is in operational state loading.
                     
@@ -267,36 +177,24 @@ zabbix_export:
                   tags:
                     - tag: scope
                       value: availability
+          master_item:
+            key: ospf.walk
           preprocessing:
+            - type: SNMP_WALK_TO_JSON
+              parameters:
+                - '{#OSPF_NEIGHBOR}'
+                - 1.3.6.1.2.1.14.10.1.1
+                - '0'
             - type: DISCARD_UNCHANGED_HEARTBEAT
               parameters:
-                - 4h
+                - 1h
       tags:
         - tag: class
           value: network
+        - tag: target
+          value: ospf
       valuemaps:
-        - uuid: 79b92d2debef41918320055812de73f8
-          name: ospfAdminStat
-          mappings:
-            - value: '1'
-              newvalue: Enabled
-            - value: '2'
-              newvalue: Disabled
-        - uuid: 2565e816165f4670bbce2e6d696e6369
-          name: ospfAreaStatus
-          mappings:
-            - value: '1'
-              newvalue: Enabled
-            - value: '2'
-              newvalue: Disabled
-        - uuid: db4c7f99d3164b02ae62ac3bd6553e6c
-          name: ospfIfAdminStat
-          mappings:
-            - value: '1'
-              newvalue: Enabled
-            - value: '2'
-              newvalue: Disabled
-        - uuid: 91bdcc8a8c494abcbe98e5cb6d6a0689
+        - uuid: 78ba3ab99b5346a7828a2ab217539396
           name: ospfNbrState
           mappings:
             - value: '1'
