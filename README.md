@@ -6,6 +6,6 @@ This [template](https://www.zabbix.com/documentation/current/en/manual/xml_expor
 
 The template uses
 [snmp bulk requests](https://www.zabbix.com/documentation/current/en/manual/config/items/itemtypes/snmp?hl=SNMP%2Cdiscovery#native-snmp-bulk-requests)
-which require Zabbix version 7.0 or greater.
+for discovery which require Zabbix version 6.4 or greater.
 
 ☕️ Jørn Ivar
