@@ -9,7 +9,6 @@ zabbix_export:
       name: 'OSPF by SNMP'
       description: |
         Template for monitoring the OSPF process by SNMP.
-        
         Jorn Ivar Holland
       groups:
         - name: Templates/Modules
@@ -58,7 +57,7 @@ zabbix_export:
               trigger_prototypes:
                 - uuid: 9f68d84a850345179f5cdde4caf03a7e
                   expression: '(last(/OSPF by SNMP/ospf.neighbor.changes[ospfNbrEvents.{#SNMPINDEX}],#1)<>last(/OSPF by SNMP/ospf.neighbor.changes[ospfNbrEvents.{#SNMPINDEX}],#2))=1'
-                  name: 'OSPF neighbor {#OSPF_NEIGHBOR} has changed relationship'
+                  name: 'OSPF: neighbor {#OSPF_NEIGHBOR} has changed relationship'
                   priority: WARNING
                   description: 'The relationship with OSPF neighbor {#OSPF_NEIGHBOR} has changed.'
                   tags:
@@ -85,7 +84,7 @@ zabbix_export:
               trigger_prototypes:
                 - uuid: aa99fa32718c408b9ab4c2c4f6fc9165
                   expression: '(last(/OSPF by SNMP/ospf.neighbor.id[ospfNbrRtrId.{#SNMPINDEX}],#1)<>last(/OSPF by SNMP/ospf.neighbor.id[ospfNbrRtrId.{#SNMPINDEX}],#2))=1'
-                  name: 'OSPF neighbor {#OSPF_NEIGHBOR} changed router id'
+                  name: 'OSPF: neighbor {#OSPF_NEIGHBOR} changed router id'
                   priority: INFO
                   description: 'OSPF neighbor {#OSPF_NEIGHBOR} changed router id.'
                   tags:
@@ -113,7 +112,7 @@ zabbix_export:
               trigger_prototypes:
                 - uuid: 97172f8d3c264d25bf5ce80c598a335c
                   expression: 'last(/OSPF by SNMP/ospf.neighbor.state[ospfNbrState.{#SNMPINDEX}])=2'
-                  name: 'OSPF neighbor {#OSPF_NEIGHBOR} is in state attempt'
+                  name: 'OSPF: neighbor {#OSPF_NEIGHBOR} is in state attempt'
                   priority: HIGH
                   description: |
                     OSPF neighbor with router ID {#OSPF_NEIGHBOR} is in operational state attempt.
@@ -124,7 +123,7 @@ zabbix_export:
                       value: availability
                 - uuid: c4754257acda4ede80db0b7cdb806fc3
                   expression: 'last(/OSPF by SNMP/ospf.neighbor.state[ospfNbrState.{#SNMPINDEX}])=1'
-                  name: 'OSPF neighbor {#OSPF_NEIGHBOR} is in state down'
+                  name: 'OSPF: neighbor {#OSPF_NEIGHBOR} is in state down'
                   priority: HIGH
                   description: |
                     OSPF neighbor with router ID {#OSPF_NEIGHBOR} is in operational state down.
@@ -135,7 +134,7 @@ zabbix_export:
                       value: availability
                 - uuid: 3485b9d6929a437f9fbc8250d5e7664a
                   expression: 'last(/OSPF by SNMP/ospf.neighbor.state[ospfNbrState.{#SNMPINDEX}])=6'
-                  name: 'OSPF neighbor {#OSPF_NEIGHBOR} is in state exchange'
+                  name: 'OSPF: neighbor {#OSPF_NEIGHBOR} is in state exchange'
                   priority: AVERAGE
                   description: |
                     OSPF neighbor with router ID {#OSPF_NEIGHBOR} is in operational state exchange.
@@ -146,7 +145,7 @@ zabbix_export:
                       value: availability
                 - uuid: e49eddc8a2b44cfaa2bfac8c84692395
                   expression: 'last(/OSPF by SNMP/ospf.neighbor.state[ospfNbrState.{#SNMPINDEX}])=5'
-                  name: 'OSPF neighbor {#OSPF_NEIGHBOR} is in state exchange start'
+                  name: 'OSPF: neighbor {#OSPF_NEIGHBOR} is in state exchange start'
                   priority: HIGH
                   description: |
                     OSPF neighbor with router ID {#OSPF_NEIGHBOR} is in operational state exchange start.
@@ -157,7 +156,7 @@ zabbix_export:
                       value: availability
                 - uuid: 5139797fb849491fb06d0f1a7cfb8aab
                   expression: 'last(/OSPF by SNMP/ospf.neighbor.state[ospfNbrState.{#SNMPINDEX}])=3'
-                  name: 'OSPF neighbor {#OSPF_NEIGHBOR} is in state init'
+                  name: 'OSPF: neighbor {#OSPF_NEIGHBOR} is in state init'
                   priority: HIGH
                   description: |
                     OSPF neighbor with router ID {#OSPF_NEIGHBOR} is in operational state init.
@@ -168,7 +167,7 @@ zabbix_export:
                       value: availability
                 - uuid: a81183ef1f9a4e71b184478aa28d6b4f
                   expression: 'last(/OSPF by SNMP/ospf.neighbor.state[ospfNbrState.{#SNMPINDEX}])=7'
-                  name: 'OSPF neighbor {#OSPF_NEIGHBOR} is in state loading'
+                  name: 'OSPF: neighbor {#OSPF_NEIGHBOR} is in state loading'
                   priority: HIGH
                   description: |
                     OSPF neighbor with router ID {#OSPF_NEIGHBOR} is in operational state loading.
