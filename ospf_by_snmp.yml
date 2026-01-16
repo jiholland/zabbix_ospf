@@ -79,6 +79,9 @@ zabbix_export:
                   parameters:
                     - '1.3.6.1.2.1.14.10.1.3.{#SNMPINDEX}'
                     - '0'
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - 1h
               master_item:
                 key: ospf.walk
               tags:
@@ -109,6 +112,9 @@ zabbix_export:
                   parameters:
                     - '1.3.6.1.2.1.14.10.1.6.{#SNMPINDEX}'
                     - '0'
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - 1h
               master_item:
                 key: ospf.walk
               tags:
