@@ -58,10 +58,11 @@ zabbix_export:
                   value: network
               trigger_prototypes:
                 - uuid: 9f68d84a850345179f5cdde4caf03a7e
-                  expression: '(last(/OSPF by SNMP/ospf.neighbor.changes[ospfNbrEvents.{#SNMPINDEX}],#1)<>last(/OSPF by SNMP/ospf.neighbor.changes[ospfNbrEvents.{#SNMPINDEX}],#2))=1'
+                  expression: 'change(/OSPF by SNMP/ospf.neighbor.changes[ospfNbrEvents.{#SNMPINDEX}]) and length(last(/OSPF by SNMP/ospf.neighbor.changes[ospfNbrEvents.{#SNMPINDEX}])>0)'
                   name: 'OSPF: Neighbor {#OSPF_NEIGHBOR} has changed relationship'
                   priority: INFO
-                  description: 'The relationship with OSPF neighbor {#OSPF_NEIGHBOR} has changed.'
+                  description: 'The relationship with OSPF neighbor {#OSPF_NEIGHBOR} has changed. Acknowledge to close the problem manually.'
+                  manual_close: 'YES'
                   tags:
                     - tag: scope
                       value: notice
@@ -89,7 +90,7 @@ zabbix_export:
                   value: network
               trigger_prototypes:
                 - uuid: aa99fa32718c408b9ab4c2c4f6fc9165
-                  expression: '(last(/OSPF by SNMP/ospf.neighbor.id[ospfNbrRtrId.{#SNMPINDEX}],#1)<>last(/OSPF by SNMP/ospf.neighbor.id[ospfNbrRtrId.{#SNMPINDEX}],#2))=1'
+                  expression: 'change(/OSPF by SNMP/ospf.neighbor.id[ospfNbrRtrId.{#SNMPINDEX}]) and length(last(/OSPF by SNMP/ospf.neighbor.id[ospfNbrRtrId.{#SNMPINDEX}])>0)'
                   name: 'OSPF: Neighbor {#OSPF_NEIGHBOR} changed router id'
                   priority: INFO
                   description: 'OSPF neighbor {#OSPF_NEIGHBOR} changed router id. Acknowledge to close the problem manually.'
