@@ -24,7 +24,7 @@ zabbix_export:
           trends: '0'
           description: |
             Discover OSPF neighbors:
-            1.3.6.1.2.1.14.10.1.1 = neighbor ip
+            1.3.6.1.2.1.14.10.1.1 = neighbor IP
             1.3.6.1.2.1.14.10.1.3 = neighbor router id
             1.3.6.1.2.1.14.10.1.6 = neighbor relationship state
             1.3.6.1.2.1.14.10.1.7 = neighbor relationship changes
@@ -44,7 +44,6 @@ zabbix_export:
               type: DEPENDENT
               key: 'ospf.neighbor.changes[ospfNbrEvents.{#SNMPINDEX}]'
               delay: '0'
-              history: 15d
               description: 'The number of times this neighbor relationship has changed state, or an error has occurred.'
               preprocessing:
                 - type: SNMP_WALK_VALUE
@@ -58,7 +57,7 @@ zabbix_export:
                   value: network
               trigger_prototypes:
                 - uuid: 9f68d84a850345179f5cdde4caf03a7e
-                  expression: 'change(/OSPF by SNMP/ospf.neighbor.changes[ospfNbrEvents.{#SNMPINDEX}]) and length(last(/OSPF by SNMP/ospf.neighbor.changes[ospfNbrEvents.{#SNMPINDEX}])>0)'
+                  expression: 'change(/OSPF by SNMP/ospf.neighbor.changes[ospfNbrEvents.{#SNMPINDEX}])'
                   name: 'OSPF: Neighbor {#OSPF_NEIGHBOR} has changed relationship'
                   priority: INFO
                   description: 'The relationship with OSPF neighbor {#OSPF_NEIGHBOR} has changed. Acknowledge to close the problem manually.'
@@ -71,7 +70,6 @@ zabbix_export:
               type: DEPENDENT
               key: 'ospf.neighbor.id[ospfNbrRtrId.{#SNMPINDEX}]'
               delay: '0'
-              history: 15d
               value_type: TEXT
               trends: '0'
               description: 'A 32-bit integer uniquely identifying the neighboring router in the Autonomous System.'
@@ -90,7 +88,7 @@ zabbix_export:
                   value: network
               trigger_prototypes:
                 - uuid: aa99fa32718c408b9ab4c2c4f6fc9165
-                  expression: 'change(/OSPF by SNMP/ospf.neighbor.id[ospfNbrRtrId.{#SNMPINDEX}]) and length(last(/OSPF by SNMP/ospf.neighbor.id[ospfNbrRtrId.{#SNMPINDEX}])>0)'
+                  expression: 'change(/OSPF by SNMP/ospf.neighbor.id[ospfNbrRtrId.{#SNMPINDEX}]) and length(last(/OSPF by SNMP/ospf.neighbor.id[ospfNbrRtrId.{#SNMPINDEX}]))>0'
                   name: 'OSPF: Neighbor {#OSPF_NEIGHBOR} changed router id'
                   priority: INFO
                   description: 'OSPF neighbor {#OSPF_NEIGHBOR} changed router id. Acknowledge to close the problem manually.'
@@ -103,11 +101,10 @@ zabbix_export:
               type: DEPENDENT
               key: 'ospf.neighbor.state[ospfNbrState.{#SNMPINDEX}]'
               delay: '0'
-              history: 15d
               trends: '0'
               description: 'The State of the relationship with this Neighbor.'
               valuemap:
-                name: ospfNbrState
+                name: 'ospf neighbor state'
               preprocessing:
                 - type: SNMP_WALK_VALUE
                   parameters:
@@ -124,69 +121,14 @@ zabbix_export:
                 - tag: component
                   value: network
               trigger_prototypes:
-                - uuid: 97172f8d3c264d25bf5ce80c598a335c
-                  expression: 'last(/OSPF by SNMP/ospf.neighbor.state[ospfNbrState.{#SNMPINDEX}])=2'
-                  name: 'OSPF: Neighbor {#OSPF_NEIGHBOR} is in state attempt'
+                - uuid: ff7c1f339ced4420a02fa5f04e24de89
+                  expression: |
+                    last(/OSPF by SNMP/ospf.neighbor.state[ospfNbrState.{#SNMPINDEX}])<>8
+                    and last(/OSPF by SNMP/ospf.neighbor.state[ospfNbrState.{#SNMPINDEX}])<>4
+                  name: 'OSPF: Neighbor {#OSPF_NEIGHBOR} adjacency is not established'
+                  opdata: 'Current value: {ITEM.LASTVALUE1}'
                   priority: AVERAGE
-                  description: |
-                    OSPF neighbor with router ID {#OSPF_NEIGHBOR} is in operational state attempt.
-                    
-                    The attempt state is similar to the down state, except that a router is in the process of efforts to establish a conversation with another router, but is only used on non-broadcast multiple-access networks (NBMAs).
-                  tags:
-                    - tag: scope
-                      value: availability
-                - uuid: c4754257acda4ede80db0b7cdb806fc3
-                  expression: 'last(/OSPF by SNMP/ospf.neighbor.state[ospfNbrState.{#SNMPINDEX}])=1'
-                  name: 'OSPF: Neighbor {#OSPF_NEIGHBOR} is in state down'
-                  priority: HIGH
-                  description: |
-                    OSPF neighbor with router ID {#OSPF_NEIGHBOR} is in operational state down.
-                    
-                    The state down represents the initial state of a conversation when no information has been exchanged and retained between routers with the Hello Protocol.
-                  tags:
-                    - tag: scope
-                      value: availability
-                - uuid: 3485b9d6929a437f9fbc8250d5e7664a
-                  expression: 'last(/OSPF by SNMP/ospf.neighbor.state[ospfNbrState.{#SNMPINDEX}])=6'
-                  name: 'OSPF: Neighbor {#OSPF_NEIGHBOR} is in state exchange'
-                  priority: AVERAGE
-                  description: |
-                    OSPF neighbor with router ID {#OSPF_NEIGHBOR} is in operational state exchange.
-                    
-                    In the exchange state, a router is sending its link-state database information to the adjacent neighbor. At this state, a router can exchange all OSPF routing protocol packets.
-                  tags:
-                    - tag: scope
-                      value: availability
-                - uuid: e49eddc8a2b44cfaa2bfac8c84692395
-                  expression: 'last(/OSPF by SNMP/ospf.neighbor.state[ospfNbrState.{#SNMPINDEX}])=5'
-                  name: 'OSPF: Neighbor {#OSPF_NEIGHBOR} is in state exchange start'
-                  priority: AVERAGE
-                  description: |
-                    OSPF neighbor with router ID {#OSPF_NEIGHBOR} is in operational state exchange start.
-                    
-                    The exstart state is the first step of adjacency of two routers.
-                  tags:
-                    - tag: scope
-                      value: availability
-                - uuid: 5139797fb849491fb06d0f1a7cfb8aab
-                  expression: 'last(/OSPF by SNMP/ospf.neighbor.state[ospfNbrState.{#SNMPINDEX}])=3'
-                  name: 'OSPF: Neighbor {#OSPF_NEIGHBOR} is in state init'
-                  priority: AVERAGE
-                  description: |
-                    OSPF neighbor with router ID {#OSPF_NEIGHBOR} is in operational state init.
-                    
-                    The init state indicates that a hello packet has been received from a neighbor, but the router has not established a two-way conversation.
-                  tags:
-                    - tag: scope
-                      value: availability
-                - uuid: a81183ef1f9a4e71b184478aa28d6b4f
-                  expression: 'last(/OSPF by SNMP/ospf.neighbor.state[ospfNbrState.{#SNMPINDEX}])=7'
-                  name: 'OSPF: Neighbor {#OSPF_NEIGHBOR} is in state loading'
-                  priority: AVERAGE
-                  description: |
-                    OSPF neighbor with router ID {#OSPF_NEIGHBOR} is in operational state loading.
-                    
-                    In the loading state, a router requests the most recent link-state advertisements (LSAs) from its neighbor discovered in the previous state.
+                  description: 'Please check the OSPF neighbor state for router ID {#OSPF_NEIGHBOR}.'
                   tags:
                     - tag: scope
                       value: availability
@@ -208,7 +150,7 @@ zabbix_export:
           value: ospf
       valuemaps:
         - uuid: 78ba3ab99b5346a7828a2ab217539396
-          name: ospfNbrState
+          name: 'ospf neighbor state'
           mappings:
             - value: '1'
               newvalue: down
