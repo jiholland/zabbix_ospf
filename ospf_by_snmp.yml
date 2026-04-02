@@ -18,7 +18,7 @@ zabbix_export:
           name: 'SNMP walk OSPF'
           type: SNMP_AGENT
           snmp_oid: 'walk[1.3.6.1.2.1.14.10.1.1,1.3.6.1.2.1.14.10.1.3,1.3.6.1.2.1.14.10.1.6,1.3.6.1.2.1.14.10.1.7]'
-          key: ospf.walk
+          key: ospf.neighbor.walk
           history: '0'
           value_type: TEXT
           trends: '0'
@@ -35,7 +35,7 @@ zabbix_export:
         - uuid: 2612ed69140d4ecb89671b451947e7db
           name: 'OSPF discovery'
           type: DEPENDENT
-          key: ospf.discovery
+          key: ospf.neighbor.discovery
           delay: '0'
           description: 'Discover OSPF neighbors.'
           item_prototypes:
@@ -51,10 +51,12 @@ zabbix_export:
                     - '1.3.6.1.2.1.14.10.1.7.{#SNMPINDEX}'
                     - '0'
               master_item:
-                key: ospf.walk
+                key: ospf.neighbor.walk
               tags:
                 - tag: component
                   value: network
+                - tag: component
+                  value: ospf
               trigger_prototypes:
                 - uuid: 9f68d84a850345179f5cdde4caf03a7e
                   expression: 'change(/OSPF by SNMP/ospf.neighbor.changes[ospfNbrEvents.{#SNMPINDEX}])'
@@ -82,10 +84,12 @@ zabbix_export:
                   parameters:
                     - 1h
               master_item:
-                key: ospf.walk
+                key: ospf.neighbor.walk
               tags:
                 - tag: component
                   value: network
+                - tag: component
+                  value: ospf
               trigger_prototypes:
                 - uuid: aa99fa32718c408b9ab4c2c4f6fc9165
                   expression: 'change(/OSPF by SNMP/ospf.neighbor.id[ospfNbrRtrId.{#SNMPINDEX}]) and length(last(/OSPF by SNMP/ospf.neighbor.id[ospfNbrRtrId.{#SNMPINDEX}]))>0'
@@ -104,7 +108,7 @@ zabbix_export:
               trends: '0'
               description: 'The State of the relationship with this Neighbor.'
               valuemap:
-                name: 'ospf neighbor state'
+                name: 'OSPF neighbor state'
               preprocessing:
                 - type: SNMP_WALK_VALUE
                   parameters:
@@ -114,26 +118,28 @@ zabbix_export:
                   parameters:
                     - 1h
               master_item:
-                key: ospf.walk
+                key: ospf.neighbor.walk
               tags:
                 - tag: component
                   value: health
                 - tag: component
                   value: network
+                - tag: component
+                  value: ospf
               trigger_prototypes:
                 - uuid: ff7c1f339ced4420a02fa5f04e24de89
                   expression: |
                     last(/OSPF by SNMP/ospf.neighbor.state[ospfNbrState.{#SNMPINDEX}])<>8
                     and last(/OSPF by SNMP/ospf.neighbor.state[ospfNbrState.{#SNMPINDEX}])<>4
                   name: 'OSPF: Neighbor {#OSPF_NEIGHBOR} adjacency is not established'
-                  opdata: 'Current value: {ITEM.LASTVALUE1}'
+                  opdata: 'Current state: {ITEM.LASTVALUE1}'
                   priority: AVERAGE
                   description: 'Please check the OSPF neighbor state for router ID {#OSPF_NEIGHBOR}.'
                   tags:
                     - tag: scope
                       value: availability
           master_item:
-            key: ospf.walk
+            key: ospf.neighbor.walk
           preprocessing:
             - type: SNMP_WALK_TO_JSON
               parameters:
@@ -150,7 +156,7 @@ zabbix_export:
           value: ospf
       valuemaps:
         - uuid: 78ba3ab99b5346a7828a2ab217539396
-          name: 'ospf neighbor state'
+          name: 'OSPF neighbor state'
           mappings:
             - value: '1'
               newvalue: down
