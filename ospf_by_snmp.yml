@@ -59,7 +59,7 @@ zabbix_export:
                   value: ospf
               trigger_prototypes:
                 - uuid: 9f68d84a850345179f5cdde4caf03a7e
-                  expression: 'change(/OSPF by SNMP/ospf.neighbor.changes[ospfNbrEvents.{#SNMPINDEX}])'
+                  expression: 'change(/OSPF by SNMP/ospf.neighbor.changes[ospfNbrEvents.{#SNMPINDEX}])=1'
                   name: 'OSPF: Neighbor {#OSPF_NEIGHBOR} has changed relationship'
                   priority: INFO
                   description: 'The relationship with OSPF neighbor {#OSPF_NEIGHBOR} has changed. Acknowledge to close the problem manually.'
@@ -92,7 +92,7 @@ zabbix_export:
                   value: ospf
               trigger_prototypes:
                 - uuid: aa99fa32718c408b9ab4c2c4f6fc9165
-                  expression: 'change(/OSPF by SNMP/ospf.neighbor.id[ospfNbrRtrId.{#SNMPINDEX}]) and length(last(/OSPF by SNMP/ospf.neighbor.id[ospfNbrRtrId.{#SNMPINDEX}]))>0'
+                  expression: 'change(/OSPF by SNMP/ospf.neighbor.id[ospfNbrRtrId.{#SNMPINDEX}])=1 and length(last(/OSPF by SNMP/ospf.neighbor.id[ospfNbrRtrId.{#SNMPINDEX}]))>0'
                   name: 'OSPF: Neighbor {#OSPF_NEIGHBOR} changed router id'
                   priority: INFO
                   description: 'OSPF neighbor {#OSPF_NEIGHBOR} changed router id. Acknowledge to close the problem manually.'
@@ -159,18 +159,18 @@ zabbix_export:
           name: 'OSPF neighbor state'
           mappings:
             - value: '1'
-              newvalue: down
+              newvalue: Down
             - value: '2'
-              newvalue: attempt
+              newvalue: Attempt
             - value: '3'
-              newvalue: init
+              newvalue: Init
             - value: '4'
-              newvalue: twoWay
+              newvalue: TwoWay
             - value: '5'
-              newvalue: exchangeStart
+              newvalue: ExchangeStart
             - value: '6'
-              newvalue: exchange
+              newvalue: Exchange
             - value: '7'
-              newvalue: loading
+              newvalue: Loading
             - value: '8'
-              newvalue: full
+              newvalue: Full
