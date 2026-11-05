@@ -14,8 +14,24 @@ zabbix_export:
       groups:
         - name: 'Templates/Network modules'
       items:
+        - uuid: ed9658d6b40a4a0dac595f14d2c15a68
+          name: 'SNMP walk OSPF interfaces'
+          type: SNMP_AGENT
+          snmp_oid: 'walk[1.3.6.1.2.1.14.7.1.1,1.3.6.1.2.1.14.7.1.5,1.3.6.1.2.1.14.7.1.12]'
+          key: ospf.interface.walk
+          history: '0'
+          value_type: TEXT
+          trends: '0'
+          description: |
+            Discover OSPF interfaces:
+            1.3.6.1.2.1.14.7.1.1 = interface ip
+            1.3.6.1.2.1.14.7.1.5 = interface admin state
+            1.3.6.1.2.1.14.7.1.12 = interface state
+          tags:
+            - tag: component
+              value: raw
         - uuid: 2683f9a2bc8c4e78a90f49acc61fff0f
-          name: 'SNMP walk OSPF'
+          name: 'SNMP walk OSPF neighbors'
           type: SNMP_AGENT
           snmp_oid: 'walk[1.3.6.1.2.1.14.10.1.1,1.3.6.1.2.1.14.10.1.3,1.3.6.1.2.1.14.10.1.6,1.3.6.1.2.1.14.10.1.7]'
           key: ospf.neighbor.walk
@@ -32,12 +48,79 @@ zabbix_export:
             - tag: component
               value: raw
       discovery_rules:
+        - uuid: 7420b8e7d99843ccb3b4f0961194b911
+          name: 'OSPF interface discovery'
+          type: DEPENDENT
+          key: ospf.interface.discovery
+          delay: '0'
+          filter:
+            conditions:
+              - macro: '{#OSPF_IF_ADMIN_STATUS}'
+                value: '{$OSPF.IF.ADMINSTATUS.NOT_MATCHES}'
+                operator: NOT_MATCHES_REGEX
+                formulaid: A
+          description: 'Discover OSPF interfaces.'
+          item_prototypes:
+            - uuid: d49a69c4be14492eb54dc503bfd3b9ef
+              name: 'OSPF interface {#OSPF_IF_IP} operational state'
+              type: DEPENDENT
+              key: 'ospf.interface.state[ospfIfState.{#SNMPINDEX}]'
+              delay: '0'
+              trends: '0'
+              description: 'The OSPF interface operational state.'
+              valuemap:
+                name: 'OSPF interface state'
+              preprocessing:
+                - type: SNMP_WALK_VALUE
+                  parameters:
+                    - '1.3.6.1.2.1.14.7.1.12.{#SNMPINDEX}'
+                    - '0'
+                - type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - 1h
+              master_item:
+                key: ospf.interface.walk
+              tags:
+                - tag: component
+                  value: health
+                - tag: component
+                  value: network
+                - tag: component
+                  value: ospf
+              trigger_prototypes:
+                - uuid: 43042bd2872f4265ae45f21c9fee4e63
+                  expression: 'last(/OSPF by SNMP/ospf.interface.state[ospfIfState.{#SNMPINDEX}])=1 or last(/OSPF by SNMP/ospf.interface.state[ospfIfState.{#SNMPINDEX}])=3'
+                  name: 'OSPF: Interface {#OSPF_IF_IP} is not operational'
+                  opdata: 'Current state: {ITEM.LASTVALUE1}'
+                  priority: AVERAGE
+                  description: 'OSPF interface is in operational state ''Down'' or ''Waiting''.'
+                  tags:
+                    - tag: scope
+                      value: availability
+          master_item:
+            key: ospf.interface.walk
+          preprocessing:
+            - type: SNMP_WALK_TO_JSON
+              parameters:
+                - '{#OSPF_IF_IP}'
+                - 1.3.6.1.2.1.14.7.1.1
+                - '0'
+                - '{#OSPF_IF_ADMIN_STATUS}'
+                - 1.3.6.1.2.1.14.7.1.5
+                - '0'
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - 1h
         - uuid: 2612ed69140d4ecb89671b451947e7db
-          name: 'OSPF discovery'
+          name: 'OSPF neighbor discovery'
           type: DEPENDENT
           key: ospf.neighbor.discovery
           delay: '0'
-          description: 'Discover OSPF neighbors.'
+          enabled_lifetime_type: DISABLE_NEVER
+          description: |
+            Discover OSPF neighbors.
+            
+            Lost neighbors are not immediately disabled by the discovery rule. Instead, their relationship state is set to unknown, while the last router ID and the number of relationship changes are preserved. This behavior is intended to prevent items and triggers from being immediately disabled when a discovered OSPF neighbor goes down and its associated SNMP OIDs are no longer discovered. In such cases, the SNMP OIDs are removed rather than reporting the neighbor's state as down, which would otherwise cause the discovery rule to immediately disable the associated items and triggers.
           item_prototypes:
             - uuid: 02f7231af39442aeb7476f1923e59225
               name: 'OSPF neighbor {#OSPF_NEIGHBOR} number of relationship changes'
@@ -50,6 +133,7 @@ zabbix_export:
                   parameters:
                     - '1.3.6.1.2.1.14.10.1.7.{#SNMPINDEX}'
                     - '0'
+                  error_handler: DISCARD_VALUE
               master_item:
                 key: ospf.neighbor.walk
               tags:
@@ -80,6 +164,7 @@ zabbix_export:
                   parameters:
                     - '1.3.6.1.2.1.14.10.1.3.{#SNMPINDEX}'
                     - '0'
+                  error_handler: DISCARD_VALUE
                 - type: DISCARD_UNCHANGED_HEARTBEAT
                   parameters:
                     - 1h
@@ -114,6 +199,8 @@ zabbix_export:
                   parameters:
                     - '1.3.6.1.2.1.14.10.1.6.{#SNMPINDEX}'
                     - '0'
+                  error_handler: CUSTOM_VALUE
+                  error_handler_params: '0'
                 - type: DISCARD_UNCHANGED_HEARTBEAT
                   parameters:
                     - 1h
@@ -148,13 +235,34 @@ zabbix_export:
                 - '0'
             - type: DISCARD_UNCHANGED_HEARTBEAT
               parameters:
-                - 1h
+                - 2h
       tags:
         - tag: class
           value: network
         - tag: target
           value: ospf
+      macros:
+        - macro: '{$OSPF.IF.ADMINSTATUS.NOT_MATCHES}'
+          value: ^2$
+          description: 'Filter out ospf interfaces with admin status `down(2)` by default.'
       valuemaps:
+        - uuid: 3bbbed62c6164b16a6bdbc0eea76ba42
+          name: 'OSPF interface state'
+          mappings:
+            - value: '1'
+              newvalue: Down
+            - value: '2'
+              newvalue: Loopback
+            - value: '3'
+              newvalue: Waiting
+            - value: '4'
+              newvalue: PointToPoint
+            - value: '5'
+              newvalue: DesignatedRouter
+            - value: '6'
+              newvalue: BackupDesignatedRouter
+            - value: '7'
+              newvalue: OtherDesignatedRouter
         - uuid: 78ba3ab99b5346a7828a2ab217539396
           name: 'OSPF neighbor state'
           mappings:
@@ -165,12 +273,14 @@ zabbix_export:
             - value: '3'
               newvalue: Init
             - value: '4'
-              newvalue: TwoWay
+              newvalue: 'Two way'
             - value: '5'
-              newvalue: ExchangeStart
+              newvalue: 'Exchange start'
             - value: '6'
               newvalue: Exchange
             - value: '7'
               newvalue: Loading
             - value: '8'
               newvalue: Full
+            - value: '0'
+              newvalue: Unknown
