@@ -1,5 +1,5 @@
 zabbix_export:
-  version: '7.0'
+  version: '8.0'
   template_groups:
     - uuid: 57b7ae836ca64446ba2c296389c009b7
       name: 'Templates/Network modules'
@@ -14,22 +14,6 @@ zabbix_export:
       groups:
         - name: 'Templates/Network modules'
       items:
-        - uuid: ed9658d6b40a4a0dac595f14d2c15a68
-          name: 'SNMP walk OSPF interfaces'
-          type: SNMP_AGENT
-          snmp_oid: 'walk[1.3.6.1.2.1.14.7.1.1,1.3.6.1.2.1.14.7.1.5,1.3.6.1.2.1.14.7.1.12]'
-          key: ospf.interface.walk
-          history: '0'
-          value_type: TEXT
-          trends: '0'
-          description: |
-            Discover OSPF interfaces:
-            1.3.6.1.2.1.14.7.1.1 = interface ip
-            1.3.6.1.2.1.14.7.1.5 = interface admin state
-            1.3.6.1.2.1.14.7.1.12 = interface state
-          tags:
-            - tag: component
-              value: raw
         - uuid: 2683f9a2bc8c4e78a90f49acc61fff0f
           name: 'SNMP walk OSPF neighbors'
           type: SNMP_AGENT
@@ -37,7 +21,6 @@ zabbix_export:
           key: ospf.neighbor.walk
           history: '0'
           value_type: TEXT
-          trends: '0'
           description: |
             Discover OSPF neighbors:
             1.3.6.1.2.1.14.10.1.1 = neighbor IP
@@ -48,74 +31,10 @@ zabbix_export:
             - tag: component
               value: raw
       discovery_rules:
-        - uuid: 7420b8e7d99843ccb3b4f0961194b911
-          name: 'OSPF interface discovery'
-          type: DEPENDENT
-          key: ospf.interface.discovery
-          delay: '0'
-          filter:
-            conditions:
-              - macro: '{#OSPF_IF_ADMIN_STATUS}'
-                value: '{$OSPF.IF.ADMINSTATUS.NOT_MATCHES}'
-                operator: NOT_MATCHES_REGEX
-                formulaid: A
-          description: 'Discover OSPF interfaces.'
-          item_prototypes:
-            - uuid: d49a69c4be14492eb54dc503bfd3b9ef
-              name: 'OSPF interface {#OSPF_IF_IP} operational state'
-              type: DEPENDENT
-              key: 'ospf.interface.state[ospfIfState.{#SNMPINDEX}]'
-              delay: '0'
-              trends: '0'
-              description: 'The OSPF interface operational state.'
-              valuemap:
-                name: 'OSPF interface state'
-              preprocessing:
-                - type: SNMP_WALK_VALUE
-                  parameters:
-                    - '1.3.6.1.2.1.14.7.1.12.{#SNMPINDEX}'
-                    - '0'
-                - type: DISCARD_UNCHANGED_HEARTBEAT
-                  parameters:
-                    - 1h
-              master_item:
-                key: ospf.interface.walk
-              tags:
-                - tag: component
-                  value: health
-                - tag: component
-                  value: network
-                - tag: component
-                  value: ospf
-              trigger_prototypes:
-                - uuid: 43042bd2872f4265ae45f21c9fee4e63
-                  expression: 'last(/OSPF by SNMP/ospf.interface.state[ospfIfState.{#SNMPINDEX}])=1 or last(/OSPF by SNMP/ospf.interface.state[ospfIfState.{#SNMPINDEX}])=3'
-                  name: 'OSPF: Interface {#OSPF_IF_IP} is not operational'
-                  opdata: 'Current state: {ITEM.LASTVALUE1}'
-                  priority: AVERAGE
-                  description: 'OSPF interface is in operational state ''Down'' or ''Waiting''.'
-                  tags:
-                    - tag: scope
-                      value: availability
-          master_item:
-            key: ospf.interface.walk
-          preprocessing:
-            - type: SNMP_WALK_TO_JSON
-              parameters:
-                - '{#OSPF_IF_IP}'
-                - 1.3.6.1.2.1.14.7.1.1
-                - '0'
-                - '{#OSPF_IF_ADMIN_STATUS}'
-                - 1.3.6.1.2.1.14.7.1.5
-                - '0'
-            - type: DISCARD_UNCHANGED_HEARTBEAT
-              parameters:
-                - 1h
         - uuid: 2612ed69140d4ecb89671b451947e7db
           name: 'OSPF neighbor discovery'
           type: DEPENDENT
           key: ospf.neighbor.discovery
-          delay: '0'
           enabled_lifetime_type: DISABLE_NEVER
           description: |
             Discover OSPF neighbors.
@@ -126,7 +45,6 @@ zabbix_export:
               name: 'OSPF neighbor {#OSPF_NEIGHBOR} number of relationship changes'
               type: DEPENDENT
               key: 'ospf.neighbor.changes[ospfNbrEvents.{#SNMPINDEX}]'
-              delay: '0'
               description: 'The number of times this neighbor relationship has changed state, or an error has occurred.'
               preprocessing:
                 - type: SNMP_WALK_VALUE
@@ -155,9 +73,7 @@ zabbix_export:
               name: 'OSPF neighbor {#OSPF_NEIGHBOR} router id'
               type: DEPENDENT
               key: 'ospf.neighbor.id[ospfNbrRtrId.{#SNMPINDEX}]'
-              delay: '0'
               value_type: TEXT
-              trends: '0'
               description: 'A 32-bit integer uniquely identifying the neighboring router in the Autonomous System.'
               preprocessing:
                 - type: SNMP_WALK_VALUE
@@ -189,7 +105,6 @@ zabbix_export:
               name: 'OSPF neighbor {#OSPF_NEIGHBOR} relationship state'
               type: DEPENDENT
               key: 'ospf.neighbor.state[ospfNbrState.{#SNMPINDEX}]'
-              delay: '0'
               trends: '0'
               description: 'The State of the relationship with this Neighbor.'
               valuemap:
@@ -241,28 +156,7 @@ zabbix_export:
           value: network
         - tag: target
           value: ospf
-      macros:
-        - macro: '{$OSPF.IF.ADMINSTATUS.NOT_MATCHES}'
-          value: ^2$
-          description: 'Filter out ospf interfaces with admin status `down(2)` by default.'
       valuemaps:
-        - uuid: 3bbbed62c6164b16a6bdbc0eea76ba42
-          name: 'OSPF interface state'
-          mappings:
-            - value: '1'
-              newvalue: Down
-            - value: '2'
-              newvalue: Loopback
-            - value: '3'
-              newvalue: Waiting
-            - value: '4'
-              newvalue: PointToPoint
-            - value: '5'
-              newvalue: DesignatedRouter
-            - value: '6'
-              newvalue: BackupDesignatedRouter
-            - value: '7'
-              newvalue: OtherDesignatedRouter
         - uuid: 78ba3ab99b5346a7828a2ab217539396
           name: 'OSPF neighbor state'
           mappings:
